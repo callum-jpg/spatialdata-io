@@ -20,7 +20,7 @@ from shapely import Polygon
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata._types import ArrayLike
-from spatialdata.models import Image2DModel, PointsModel, ShapesModel, TableModel
+from spatialdata.models import Image2DModel, Image3DModel, PointsModel, ShapesModel, TableModel
 from spatialdata.transformations.transformations import Identity, Scale
 
 from spatialdata_io._constants._constants import XeniumKeys
@@ -37,6 +37,7 @@ def xenium(
     cells_as_shapes: bool = False,
     nucleus_boundaries: bool = True,
     transcripts: bool = True,
+    morphology: bool = True,
     morphology_mip: bool = True,
     morphology_focus: bool = True,
     imread_kwargs: Mapping[str, Any] = MappingProxyType({}),
@@ -53,6 +54,7 @@ def xenium(
         - ``{xx.TRANSCRIPTS_FILE!r}``: File containing transcripts.
         - ``{xx.CELL_FEATURE_MATRIX_FILE!r}``: File containing cell feature matrix.
         - ``{xx.CELL_METADATA_FILE!r}``: File containing cell metadata.
+        - ``{xx.MORPHOLOGY_FILE!r}``: File containing morphology (3D).
         - ``{xx.MORPHOLOGY_MIP_FILE!r}``: File containing morphology mip.
         - ``{xx.MORPHOLOGY_FOCUS_FILE!r}``: File containing morphology focus.
 
@@ -72,6 +74,8 @@ def xenium(
         Whether to read nucleus boundaries.
     transcripts
         Whether to read transcripts.
+    morphology
+        Whether to read the 3D morphology image.
     morphology_mip
         Whether to read morphology mip.
     morphology_focus
@@ -125,6 +129,15 @@ def xenium(
         points["transcripts"] = _get_points(path, specs)
 
     images = {}
+    if morphology:
+        images["morphology"] = _get_images(
+            path,
+            XeniumKeys.MORPHOLOGY_FILE,
+            specs,
+            3,
+            imread_kwargs,
+            image_models_kwargs,
+        )
     if morphology_mip:
         images["morphology_mip"] = _get_images(
             path,
@@ -211,10 +224,17 @@ def _get_images(
     path: Path,
     file: str,
     specs: dict[str, Any],
+    ndim: int = 2,
     imread_kwargs: Mapping[str, Any] = MappingProxyType({}),
     image_models_kwargs: Mapping[str, Any] = MappingProxyType({}),
 ) -> SpatialImage | MultiscaleSpatialImage:
     image = imread(path / file, **imread_kwargs)
-    return Image2DModel.parse(
-        image, transformations={"global": Identity()}, dims=("c", "y", "x"), **image_models_kwargs
-    )
+    print(1111, image.shape)
+    if ndim == 3:
+        return Image3DModel.parse(
+            image, transformations={"global": Identity()}, dims=("c", "z", "y", "x"), **image_models_kwargs
+        )
+    else:
+        return Image2DModel.parse(
+            image, transformations={"global": Identity()}, dims=("c", "y", "x"), **image_models_kwargs
+        )

@@ -93,6 +93,7 @@ class XeniumKeys(ModeEnum):
     CELL_NUCLEUS_AREA = "nucleus_area"
 
     # morphology iamges
+    MORPHOLOGY_FILE = "morphology.ome.tif"
     MORPHOLOGY_MIP_FILE = "morphology_mip.ome.tif"
     MORPHOLOGY_FOCUS_FILE = "morphology_focus.ome.tif"
 
